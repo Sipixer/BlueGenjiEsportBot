@@ -5,8 +5,13 @@ const authKey = "49ec69d1-1ced-2140-7875-2e6385e59312:fx"; // Replace with your 
 const translator = new deepl.Translator(authKey);
 
 export const Translate = async (Text: string, lang: TargetLanguageCode) => {
-  const result = await translator.translateText(Text, null, lang);
-  return result.text;
+  try {
+    const result = await translator.translateText(Text, null, lang);
+    return result.text;
+  } catch (error) {
+    console.log(error);
+    return "Error";
+  }
 };
 
 export const Usage = async () => {

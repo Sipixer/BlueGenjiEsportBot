@@ -101,36 +101,56 @@ const TranslateReaction = async (
   reaction: MessageReaction | PartialMessageReaction,
   user: User | PartialUser
 ) => {
+  console.log(reaction.emoji.name);
   if (reaction.emoji.name == undefined) return;
+  console.log(ReactionLang.has(reaction.emoji.name));
   if (!ReactionLang.has(reaction.emoji.name)) return;
-  const lang = ReactionLang.get(reaction.emoji.name);
+  const lang = ReactionLang.get(reaction.emoji.name) as string;
+  await reaction.message.fetch();
+  console.log(reaction.message.content);
   if (reaction.message.content == undefined || reaction.message.content == "")
     return;
   const text = reaction.message.content;
   const wpm = 5;
   const words = text.trim().split(/\s+/).length;
-
+  console.log(reaction.emoji.name);
   const time = words / wpm + 20;
+  SendMessage(reaction, reaction.message.content, lang, time);
+};
 
-  const msg = await reaction.message.reply({
-    embeds: [
-      {
-        title: reaction.emoji.name,
-        description: await Translate(text, lang as TargetLanguageCode),
-        color: 10181046,
-        author: {
-          name: user.username as string,
-          icon_url: user.avatarURL() as string,
+const SendMessage = async (
+  reaction: MessageReaction | PartialMessageReaction,
+  text: string,
+  lang: string,
+  time: number
+) => {
+  console.log("SendMessage");
+  const translate = await Translate(text, lang as TargetLanguageCode);
+  console.log(translate);
+  try {
+    const msg = await reaction.message.reply({
+      embeds: [
+        {
+          title: reaction.emoji.name as string,
+          description: translate,
+          color: 10181046,
+          author: {
+            name: reaction.message.author?.username as string,
+            icon_url: reaction.message.author?.avatarURL() as string,
+          },
+          footer: {
+            text: "Delete in " + time + " sec.",
+          },
         },
-        footer: {
-          text: "Delete in " + time + " sec.",
-        },
-      },
-    ],
-  });
-  setTimeout(() => {
-    if (msg.deletable) {
-      msg.delete();
-    }
-  }, time * 1000);
+      ],
+    });
+    setTimeout(() => {
+      if (msg.deletable) {
+        msg.delete();
+      }
+    }, time * 1000);
+  } catch (error) {
+    console.log(error);
+    console.log("Error sending message.");
+  }
 };
